@@ -2,7 +2,8 @@ import pandas as pd
 
 
 raw_csv = 'c:/dataset/X_ray/Data_Entry_2017.csv'
-dnn_diag = ['No Finding', 'Cardiomegaly', 'Effusion', 'Hernia', 'Mass', 'Nodule', 'Pneumothorax']
+dnn_diag = ['other', 'No Finding', 'Cardiomegaly', 'Effusion', 'Hernia', 'Mass', 'Nodule', 'Pneumothorax']
+
 
 df = pd.read_csv(raw_csv)[:]
 df = df[df['View Position'] == 'PA'].reset_index(drop=True) #only PA  View Position
@@ -20,7 +21,7 @@ for col in ('Image Index',
             'View Position'):
     df2[col] = df[col]
 
-
+df2['other'] = 0
 for i in range(len(df2)):
     if i%100 == 0:
         print('converting {}%'.format(round(100/len(df2)*i,2)))
@@ -32,13 +33,17 @@ for i in range(len(df2)):
             found = 1
         else:
             df2.at[i, diagnosis] = 0
-    if found == 1:
-        df2.drop(df2.index[i]) #delete rows wich not in dnn_diag
+
+    if found == 0:
+        df2.at[i, 'other'] = 1
+        #df2 = df2.drop(df2.index[i]) #delete rows wich not in dnn_diag
+
 
 for diagnosis in dnn_diag:
     df2[diagnosis] = df2[diagnosis].astype(int)
 
+df2 = df2[df2['other'] == 0]
+del df2['other']
 
-print(df2)
 df2.to_csv('./data/for_Meta.csv')
 
